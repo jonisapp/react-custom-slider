@@ -1,6 +1,6 @@
 {
   "name": "react-custom-slider",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "a very easy to use customizable slider for React",
   "author": "jonisapp",
   "license": "MIT",
@@ -52,5 +52,16 @@
   ],
   "dependencies": {
     "prop-types": "^15.7.2"
-  }
+  },
+  "keywords": [
+    "react",
+    "component",
+    "react-component",
+    "slider",
+    "custom",
+    "customizable",
+    "range",
+    "input",
+    "input-range"
+  ]
 }
