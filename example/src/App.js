@@ -1,10 +1,26 @@
 import React from 'react'
 
-import { ExampleComponent } from 'react-custom-slider'
-import 'react-custom-slider/dist/index.css'
+import Slider from 'react-custom-slider';
 
 const App = () => {
-  return <ExampleComponent text="Create React Library Example 😄" />
+  const [ value, setValue ] = React.useState(0);
+
+  return(
+      <div style={styles.container}>
+        <Slider
+          value={value}
+          defaultValue={value}
+          onChange={(value) => setValue(value)}
+        />
+      </div>
+  )
+};
+
+const styles = {
+  container: {
+    backgroundColor: 'transparent',
+    margin: 100
+  }
 }
 
 export default App

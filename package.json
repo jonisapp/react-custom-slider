@@ -55,13 +55,13 @@
   },
   "keywords": [
     "react",
-    "component",
-    "react-component",
     "slider",
     "custom",
     "customizable",
     "range",
     "input",
-    "input-range"
+    "input-range",
+    "component",
+    "react-component"
   ]
 }
