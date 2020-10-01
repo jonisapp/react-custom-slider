@@ -2,13 +2,12 @@ import React, { useRef, useState, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
 
-const Slider = (props) => { const labelpaddingVertical = 2
-
-  const { defaultValue, value, showValue, valueLabelColor, valueLabelStyle,
+const Slider = (props) => {
+  const { defaultValue, value, showValue, valueLabelColor, valueLabelActiveColor, valueLabelPadding, valueLabelStyle,
           min, max, stepSize, disabled, disabledColor,
           onChange, onRelease, valueRenderer,
-          trackLength, trackColor, trackThickness, trackShape, trackStyle,
-          handlerSize, handlerWidth, handlerHeight, handlerShape, handlerColor, handlerActiveColor, handlerStyle,
+          trackLength, trackColor, trackThickness, trackShape, trackStyle, fillTrack, fillColor,
+          handlerSize, handlerWidth, handlerHeight, handlerShape, handlerColor, handlerBorderColor, handlerActiveColor, handlerStyle,
           markers, markersSize, showMarkers,
           fontSize, fontColor, grabCursor, vertical, invertMarkers, style } = props;
 
@@ -19,13 +18,15 @@ const Slider = (props) => { const labelpaddingVertical = 2
   const handlerWidth_radius = handler_width / 2;
   const handlerHeight_radius = handler_height / 2;
   const defaultStep = defaultValue - min;
-  const step = value - min;
-  const steps = max - min;
 
+  const [ _value, set_Value ] = useState(defaultValue);
   const [ isActive, setIsActive ] = useState(false);
   const [ pointerStart_positionX, setPointerStart_positionX ] = useState(0);
   const [ startValue, setStartValue ] = useState((defaultStep && !value) ? defaultStep : step);
   const [ handler_position, setHandler_position ] = useState(null);
+
+  const step = (value !== null ? value : _value) - min;
+  const steps = max - min;
 
   const track_radius = trackThickness / 2;
   const stepWidth = trackLength / steps;
@@ -48,6 +49,7 @@ const Slider = (props) => { const labelpaddingVertical = 2
     if(updatedValue !== value && updatedValue % stepSize === 0) {
       setHandler_position(position);
       onChange(updatedValue)
+      set_Value(updatedValue);
     }
   }
 
@@ -109,10 +111,35 @@ const Slider = (props) => { const labelpaddingVertical = 2
             ...!vertical ? 
               { left: handlerWidth_radius, right: handlerWidth_radius, top: '50%', height: trackThickness, transform: 'translateY(-50%)' }
             : { top: handlerHeight_radius, bottom: handlerHeight_radius, left: '50%', width: trackThickness, transform: 'translateX(-50%)' },
-            backgroundColor: disabled ? disabledColor : trackColor
+            backgroundColor: disabled ? disabledColor : trackColor,
+            cursor: !disabled ? 'pointer' : 'default'
           }}
-          // onPointerDown={trackPointerDownHandler}
+          onPointerDown={trackPointerDownHandler}
         />
+        { fillTrack &&
+          <div
+            style={{...styles.trackFill,
+              borderRadius: trackShape === 'rounded' ? track_radius : 0,
+              left: handlerWidth_radius,
+              ...!vertical ?
+                {
+                  top: handlerHeight_radius,
+                  width: (handler_position !== null ? handler_position : step * stepWidth),
+                  height: trackThickness,
+                  transform: 'translateY(-50%)'
+                }
+              : {
+                  bottom: handlerHeight_radius,
+                  height: (handler_position !== null ? handler_position : step * stepWidth),
+                  width: trackThickness,
+                  transform: 'translateX(-50%)'
+                },
+              backgroundColor: fillColor,
+              cursor: !disabled ? 'pointer' : 'default'
+            }}
+            onPointerDown={trackPointerDownHandler}
+          />
+        }
         <div
           ref={ handler_ref }
           onPointerDown={pointerDownHandler}
@@ -124,28 +151,31 @@ const Slider = (props) => { const labelpaddingVertical = 2
             : { bottom: handler_position !== null ? handler_position : step * stepWidth },
             height: handler_height, width: handler_width,
             backgroundColor: isActive ? handlerActiveColor : (disabled ? disabledColor : handlerColor),
+            border: `1px solid ${ handlerBorderColor }`,
             borderRadius: handlerShape === 'rounded' ? handlerHeight_radius : 4,
-            cursor: grabCursor ? (isActive ? 'grabbing' : 'grab') : 'default'
+            cursor: (grabCursor && !disabled) ? (isActive ? 'grabbing' : 'grab') : 'default'
           }}
         />
         { (((isActive && showValue === 'active') || showMarkers === 'hidden' && showValue === 'active' && isActive) || (showValue === true)) && showMarkers &&
-          <div style={{...styles.marker, zIndex: 10, height: fontSize + labelpaddingVertical, border: `1px solid ${ handlerColor }`, ...valueLabelStyle,
+          <div style={{...styles.marker, zIndex: 10, height: fontSize,
+              padding: valueLabelPadding,
+              border: `1px solid ${ handlerColor }`, ...valueLabelStyle,
               ...!vertical ?
                 {
                   left: handlerWidth_radius + (handler_position !== null ? handler_position : step * stepWidth),
-                  top: !invertMarkers ? handler_height + markersSize : - markersSize,
-                  transform: `translate(-50%,${ !invertMarkers ? -100 : 0 }%)`, paddingLeft: 3, paddingRight: 3
+                  top: !invertMarkers ? handler_height + markersSize + valueLabelPadding - 2 : - markersSize - valueLabelPadding - 1,
+                  transform: `translate(-50%,${ !invertMarkers ? -100 : 0 }%)`
                 }
               :
                 {
                   bottom: handlerHeight_radius + (handler_position !== null ? handler_position : step * stepWidth),
-                  ...!invertMarkers ? { left: handler_width + markersSize } : { right: handler_width + markersSize },
-                  transform: `translate(${ !invertMarkers ? -100 : 100 }%, 50%)`, paddingTop: 3, paddingBottom: 3
+                  ...!invertMarkers ? { left: handler_width + markersSize + valueLabelPadding } : { right: handler_width + markersSize + valueLabelPadding },
+                  transform: `translate(${ !invertMarkers ? -100 : 100 }%, 50%)`
                 },
-              backgroundColor: valueLabelColor ? valueLabelColor : 'transparent',
+              backgroundColor: isActive ? valueLabelActiveColor : valueLabelColor,
             }}
           >
-            { valueRenderer(value) }
+            { valueRenderer(value !== null ? value : _value) }
           </div>
         }
       </div>
@@ -206,13 +236,17 @@ const styles = {
     justifyContent: 'center'
   },
   slider: {
-    position: 'relative',
+    position: 'relative'
   },
   track: {
     position: 'absolute'
   },
+  trackFill: {
+    position: 'absolute'
+  },
   handler: {
     position: 'absolute',
+    boxSizing: 'border-box',
     borderRadius: 4
   },
   marker: {
@@ -223,9 +257,11 @@ const styles = {
 
 Slider.defaultProps = {
   defaultValue: 0,
-  value: 0,
+  value: null,
   showValue: true,
-  valueLabelColor: '#424bff',
+  valueLabelColor: '#3d3b4c',
+  valueLabelActiveColor: '#4c61ff',
+  valueLabelPadding: 4,
   valueLabelStyle: { color: '#fff' },
   min: 0,
   max: 100,
@@ -238,19 +274,22 @@ Slider.defaultProps = {
   trackLength: 200,
   trackColor: '#e5e5e5',
   trackThickness: 5,
-  trackShape: 'squared',
-  trackStyle: {} ,
+  trackShape: 'rounded',
+  trackStyle: {},
+  fillTrack: true,
+  fillColor: '#4c61ff',
   handlerSize: 20,
   handlerWidth: null,
   handlerHeight: null,
   handlerShape: 'squared',
-  handlerColor: '#424bff',
-  handlerActiveColor: '#8086fc',
+  handlerColor: '#fff',
+  handlerBorderColor: '#999',
+  handlerActiveColor: '#e5e5e5',
   handlerStyle: {},
   fontSize: 12,
   fontColor: '#333',
   markers: 2,
-  markersSize: 30,
+  markersSize: 20,
   showMarkers: true,
   grabCursor: true,
   vertical: false,
@@ -263,6 +302,8 @@ Slider.propTypes = {
   value: PropTypes.number.isRequired,
   showValue: PropTypes.oneOf([true, false, 'active']),
   valueLabelColor: PropTypes.string,
+  valueLabelActiveColor: PropTypes.string,
+  valueLabelPadding: PropTypes.number,
   valueLabelStyle: PropTypes.object,
   min: PropTypes.number,
   max: PropTypes.number,
@@ -277,11 +318,14 @@ Slider.propTypes = {
   trackThickness: PropTypes.number,
   trackShape: PropTypes.oneOf(['squared', 'rounded']),
   trackStyle: PropTypes.object,
+  fillTrack: PropTypes.bool,
+  fillColor: PropTypes.string,
   handlerSize: PropTypes.number,
   handlerWidth: PropTypes.number,
   handlerHeight: PropTypes.number,
   handlerShape: PropTypes.oneOf(['squared', 'rounded']),
   handlerColor: PropTypes.string,
+  handlerBorderColor: PropTypes.string,
   handlerActiveColor: PropTypes.string,
   handlerStyle: PropTypes.object,
   fontSize: PropTypes.number,

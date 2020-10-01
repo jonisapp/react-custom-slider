@@ -6,21 +6,17 @@ const App = () => {
   const [ value, setValue ] = React.useState(0);
 
   return(
-      <div style={styles.container}>
-        <Slider
-          value={value}
-          defaultValue={value}
-          onChange={(value) => setValue(value)}
-        />
-      </div>
+    <div>
+      <Slider
+        value={value}
+        markersSize={25}
+        trackLength={250}
+        markers={11}
+        onChange={(value) => setValue(value)}
+        valueRenderer={(value) => `${value}%`}
+      />
+    </div>
   )
 };
 
-const styles = {
-  container: {
-    backgroundColor: 'transparent',
-    margin: 100
-  }
-}
-
-export default App
+export default App;
